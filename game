@@ -1,0 +1,180 @@
+import random
+
+class Character:
+    def __init__(self, name, max_hp, attack, defense):
+        self.name = name
+        self.max_hp = max_hp
+        self.hp = max_hp
+        self.attack = attack
+        self.defense = defense
+
+    def take_damage(self, damage):
+        self.hp -= max(damage - self.defense, 0)
+
+    def is_alive(self):
+        return self.hp > 0
+
+    def attack_character(self, target):
+        damage = random.randint(1, self.attack)
+        print(self.name, "attacked", target.name, "for", damage, "damage.")
+        target.take_damage(damage)
+
+class Player(Character):
+    def __init__(self, name, max_hp, attack, defense):
+        super().__init__(name, max_hp, attack, defense)
+        self.gold = 0
+        self.inventory = []
+
+    def buy_item(self, item):
+        if self.gold >= item.price:
+            self.gold -= item.price
+            self.inventory.append(item)
+            print("You bought", item.name, "for", item.price, "gold.")
+        else:
+            print("You don't have enough gold to buy that.")
+
+    def sell_item(self, item):
+        if item in self.inventory:
+            self.gold += item.price // 2
+            self.inventory.remove(item)
+            print("You sold", item.name, "for", item.price // 2, "gold.")
+        else:
+            print("You don't have that item to sell.")
+
+class Enemy(Character):
+    def __init__(self, name, max_hp, attack, defense, gold):
+        super().__init__(name, max_hp, attack, defense)
+        self.gold = gold
+
+class Item:
+    def __init__(self, name, price, use_function):
+        self.name = name
+        self.price = price
+        self.use_function = use_function
+
+    def use(self, player):
+        if self.use_function:
+            self.use_function(player)
+
+def use_potion(player):
+    player.hp = min(player.hp + 20, player.max_hp)
+    print("You drank a potion and healed for 20 HP.")
+
+def use_elixir(player):
+    player.hp = player.max_hp
+    print("You drank an elixir and fully healed yourself.")
+
+def use_scroll(player):
+    player.attack += 5
+    print("You read a scroll and increased your attack by 5.")
+
+def use_bomb(player):
+    print("You threw a bomb and dealt 20 damage to all enemies.")
+    for enemy in enemies:
+        enemy.take_damage(20)
+
+def create_item(name):
+    if name == "Potion":
+        return Item("Potion", 10, use_potion)
+    elif name == "Elixir":
+        return Item("Elixir", 50, use_elixir)
+    elif name == "Scroll":
+        return Item("Scroll", 20, use_scroll)
+    elif name == "Bomb":
+        return Item("Bomb", 30, use_bomb)
+
+def print_status():
+    print("HP:", player.hp, "/", player.max_hp)
+    print("Gold:", player.gold)
+    print("Inventory:")
+    for item in player.inventory:
+        print("-", item.name)
+
+def create_enemy():
+    name = random.choice(["Goblin", "Orc", "Troll"])
+    max_hp = random.randint(10, 20)
+    attack = random.randint(1, 5)
+    defense = random.randint(1, 5)
+    gold = random.randint(5, 10)
+    return Enemy(name, max_hp, attack, defense
+def create_player():
+    name = input("What is your name? ")
+    max_hp = random.randint(20, 30)
+    attack = random.randint(5, 10)
+    defense = random.randint(5, 10)
+    return Player(name, max_hp, attack, defense)
+
+def start_battle():
+    enemy = create_enemy()
+    print("A", enemy.name, "appeared!")
+    while player.is_alive() and enemy.is_alive():
+        print_status()
+        action = input("What do you want to do? (attack/buy/sell/use) ")
+        if action == "attack":
+            player.attack_character(enemy)
+        elif action == "buy":
+            print("Shopkeeper: What do you want to buy?")
+            print("1. Potion (10 gold)")
+            print("2. Elixir (50 gold)")
+            print("3. Scroll (20 gold)")
+            print("4. Bomb (30 gold)")
+            choice = input("Enter your choice: ")
+            if choice == "1":
+                player.buy_item(create_item("Potion"))
+            elif choice == "2":
+                player.buy_item(create_item("Elixir"))
+            elif choice == "3":
+                player.buy_item(create_item("Scroll"))
+            elif choice == "4":
+                player.buy_item(create_item("Bomb"))
+            else:
+                print("Invalid choice.")
+        elif action == "sell":
+            if not player.inventory:
+                print("You don't have any items to sell.")
+            else:
+                print("Shopkeeper: What do you want to sell?")
+                for i, item in enumerate(player.inventory):
+                    print(i + 1, item.name, "(", item.price // 2, "gold)")
+                choice = input("Enter your choice: ")
+                try:
+                    index = int(choice) - 1
+                    player.sell_item(player.inventory[index])
+                except (ValueError, IndexError):
+                    print("Invalid choice.")
+        elif action == "use":
+            if not player.inventory:
+                print("You don't have any items to use.")
+            else:
+                print("What do you want to use?")
+                for i, item in enumerate(player.inventory):
+                    print(i + 1, item.name)
+                choice = input("Enter your choice: ")
+                try:
+                    index = int(choice) - 1
+                    player.inventory[index].use(player)
+                    player.inventory.pop(index)
+                except (ValueError, IndexError):
+                    print("Invalid choice.")
+        else:
+            print("Invalid action.")
+        if enemy.is_alive():
+            enemy.attack_character(player)
+    if not player.is_alive():
+        print("You died.")
+    else:
+        print("You defeated the", enemy.name, "and gained", enemy.gold, "gold.")
+        player.gold += enemy.gold
+
+player = create_player()
+enemies = []
+
+while player.is_alive():
+    start_battle()
+    if random.random() < 0.25:
+        enemies.append(create_enemy())
+    else:
+        print("You rest and recover some HP.")
+        player.hp = min(player.hp + 5, player.max_hp)
+    print("You continue on your adventure.")
+print("Game over.")
